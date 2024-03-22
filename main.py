@@ -27,6 +27,9 @@ class PhotoRequest(BaseModel):
 
 @app.post("/process-document/")
 async def process_document(request: PhotoRequest):
+    
+    print(f"Received request with photo_id: {request.photo_id}")  # This will log the photo_id received in the request
+   
     photo_id = request.photo_id
 
     # Fetch photo URL from Firestore using photo ID
