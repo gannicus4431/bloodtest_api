@@ -27,9 +27,6 @@ class PhotoRequest(BaseModel):
 
 @app.post("/process-document/")
 async def process_document(request: PhotoRequest):
-    
-    print(f"Received request with photo_id: {request.photo_id}")  # This will log the photo_id received in the request
-   
     photo_id = request.photo_id
 
     # Fetch photo URL from Firestore using photo ID
@@ -42,11 +39,13 @@ async def process_document(request: PhotoRequest):
     if not photo_url:
         raise HTTPException(status_code=404, detail="Photo URL not found")
 
+    print(f"Attempting to retrieve photo from URL: {photo_url}")  # Add this line to print the URL
+
     # Download photo from URL
     async with httpx.AsyncClient() as client:
         resp = await client.get(photo_url)
         if resp.status_code != 200:
-            raise HTTPException(status_code=500, detail="Failed to download image")
+            raise HTTPException(status_code=500, detail=f"Failed to download image from {photo_url}")  # Modify this line to include the URL
         content = resp.content
         mime_type = resp.headers['Content-Type']
 
