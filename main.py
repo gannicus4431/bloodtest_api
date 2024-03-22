@@ -1,41 +1,62 @@
-from fastapi import FastAPI, File, UploadFile
-from openai import OpenAI
-
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import os
+import httpx
+import firebase_admin
+from firebase_admin import credentials, firestore
 from google.cloud import documentai_v1 as documentai
-from dotenv import load_dotenv
+from openai import OpenAI
+from fastapi.responses import JSONResponse
 import asyncio
 
 app = FastAPI()
 
-load_dotenv()
-# Load environment variables
+# Initialize Firebase Admin
+cred = credentials.ApplicationDefault()
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+# Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PROJECT_ID = os.getenv("PROJECT_ID")
 LOCATION = os.getenv("LOCATION")
 PROCESSOR_ID = os.getenv("PROCESSOR_ID")
-MIME_TYPE = os.getenv("MIME_TYPE")
-KEY_PATH = os.getenv("KEY_PATH")
 
-# Ensure GOOGLE_APPLICATION_CREDENTIALS is set for Google Cloud authentication
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = KEY_PATH
+class PhotoRequest(BaseModel):
+    photo_id: str
 
 @app.post("/process-document/")
-async def process_document(file: UploadFile = File(...)):
-    content = await file.read()
-    mime_type = file.content_type  # Use the uploaded file's MIME type
+async def process_document(request: PhotoRequest):
+    photo_id = request.photo_id
+
+    # Fetch photo URL from Firestore using photo ID
+    doc_ref = db.collection('photos').document(photo_id)
+    doc = doc_ref.get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    photo_details = doc.to_dict()
+    photo_url = photo_details.get('url')
+    if not photo_url:
+        raise HTTPException(status_code=404, detail="Photo URL not found")
+
+    # Download photo from URL
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(photo_url)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to download image")
+        content = resp.content
+        mime_type = resp.headers['Content-Type']
 
     try:
+        # Process the image content with Google Document AI and analyze with OpenAI
         document = await online_process(PROJECT_ID, LOCATION, PROCESSOR_ID, content, mime_type)
         extracted_text = extract_text_from_document(document)
-        
-        # Analyze the extracted text
         interpretation = await asyncio.to_thread(analyze_report, extracted_text)
-        
         return JSONResponse(content={"interpretation": interpretation})
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": "Error processing document", "error": str(e)})
+
+# Ensure the online_process, extract_text_from_document, get_text, and analyze_report functions are defined here
 
 async def online_process(project_id: str, location: str, processor_id: str, file_content: bytes, mime_type: str) -> documentai.Document:
     """
