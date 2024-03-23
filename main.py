@@ -43,6 +43,7 @@ async def process_document(request: PhotoURLRequest):
         document = await online_process(PROJECT_ID, LOCATION, PROCESSOR_ID, content, mime_type)
         extracted_text = extract_text_from_document(document)
         interpretation = await asyncio.to_thread(analyze_report, extracted_text)
+        print(f"Interpretation: {interpretation}")
         return JSONResponse(content={"interpretation": interpretation})
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": "Error processing document", "error": str(e)})
