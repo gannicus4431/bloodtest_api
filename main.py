@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import httpx
@@ -8,6 +9,16 @@ from fastapi.responses import JSONResponse
 import asyncio
 
 app = FastAPI()
+
+# Set up CORS middleware options
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allows all origins for testing purposes
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
 from dotenv import load_dotenv
 load_dotenv()
 
