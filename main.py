@@ -2,8 +2,6 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import os
 import httpx
-import firebase_admin
-from firebase_admin import credentials, firestore
 from google.cloud import documentai_v1 as documentai
 from openai import OpenAI
 from fastapi.responses import JSONResponse
@@ -11,41 +9,26 @@ import asyncio
 
 app = FastAPI()
 
-# Initialize Firebase Admin
-cred = credentials.ApplicationDefault()
-firebase_admin.initialize_app(cred)
-db = firestore.client()
-
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PROJECT_ID = os.getenv("PROJECT_ID")
 LOCATION = os.getenv("LOCATION")
 PROCESSOR_ID = os.getenv("PROCESSOR_ID")
 
-class PhotoRequest(BaseModel):
-    photo_id: str
+class PhotoURLRequest(BaseModel):
+    photo_url: str
 
 @app.post("/process-document/")
-async def process_document(request: PhotoRequest):
-    photo_id = request.photo_id
+async def process_document(request: PhotoURLRequest):
+    photo_url = request.photo_url
 
-    # Fetch photo URL from Firestore using photo ID
-    doc_ref = db.collection('photos').document(photo_id)
-    doc = doc_ref.get()
-    if not doc.exists:
-        raise HTTPException(status_code=404, detail="Photo not found")
-    photo_details = doc.to_dict()
-    photo_url = photo_details.get('url')
-    if not photo_url:
-        raise HTTPException(status_code=404, detail="Photo URL not found")
-
-    print(f"Attempting to retrieve photo from URL: {photo_url}")  # Add this line to print the URL
+    print(f"Attempting to retrieve photo from URL: {photo_url}")
 
     # Download photo from URL
     async with httpx.AsyncClient() as client:
         resp = await client.get(photo_url)
         if resp.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Failed to download image from {photo_url}")  # Modify this line to include the URL
+            raise HTTPException(status_code=500, detail=f"Failed to download image from {photo_url}")
         content = resp.content
         mime_type = resp.headers['Content-Type']
 
@@ -57,8 +40,6 @@ async def process_document(request: PhotoRequest):
         return JSONResponse(content={"interpretation": interpretation})
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": "Error processing document", "error": str(e)})
-
-# Ensure the online_process, extract_text_from_document, get_text, and analyze_report functions are defined here
 
 async def online_process(project_id: str, location: str, processor_id: str, file_content: bytes, mime_type: str) -> documentai.Document:
     """
