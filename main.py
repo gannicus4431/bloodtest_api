@@ -8,12 +8,18 @@ from fastapi.responses import JSONResponse
 import asyncio
 
 app = FastAPI()
+from dotenv import load_dotenv
+load_dotenv()
 
 # Environment variables
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PROJECT_ID = os.getenv("PROJECT_ID")
 LOCATION = os.getenv("LOCATION")
 PROCESSOR_ID = os.getenv("PROCESSOR_ID")
+KEY_PATH = os.getenv("KEY_PATH")
+
+# Ensure GOOGLE_APPLICATION_CREDENTIALS is set for Google Cloud authentication
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = KEY_PATH
 
 class PhotoURLRequest(BaseModel):
     photo_url: str
