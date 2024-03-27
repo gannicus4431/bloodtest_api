@@ -103,10 +103,10 @@ def analyze_report(report_text: str) -> str:
         model="gpt-4-0125-preview",
         messages=[
             {"role": "system", 
-             "content": "You will analyse the blood test report and interpret it to the user."},
+             "content": "You will analyse the blood test report and interpret it to the user. Please also format it in json where each element is a separate key-value pair, grouped together when possible. Add a summary at the end as a key-value pair titled 'Summary' explaining clearly the report in key-value pair, where the keys are the areas of focus. Try to explain more rather than just describing the report, such as possible causes or solution."},
             {"role": "user", "content": report_text}
         ],
-        max_tokens=600,
+        max_tokens=1300,
         temperature=0.3,
     )
     # Updated extraction based on the response structure
