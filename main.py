@@ -13,11 +13,17 @@ app = FastAPI()
 # Set up CORS middleware options
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allows all origins for testing purposes
+    allow_origins=[
+        "http://localhost:3000",
+        "https://bloodtest-415502.as.r.appspot.com",
+        "https://bloodtest.is",
+        "https://www.bloodtest.is",
+    ],
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+
 
 from dotenv import load_dotenv
 load_dotenv()
