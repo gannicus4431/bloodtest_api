@@ -109,7 +109,7 @@ def analyze_report(report_text: str) -> str:
         model="gpt-4-0125-preview",
         messages=[
             {"role": "system", 
-             "content": "You will analyse the blood test report and interpret it to the user. Please also format it in json where each element is a separate key-value pair, grouped together when possible. Add a summary at the end as a key-value pair titled 'Summary' explaining clearly the report in key-value pair, where the keys are the areas of focus. Try to explain more rather than just describing the report, such as possible causes or solution."},
+             "content": "You will analyse the blood test report and interpret it to the user. Please also format it in json where each element is a separate key-value pair, grouped together when possible. Add a summary at the end as a key-value pair titled 'Summary' explaining clearly the report in key-value pair, where the keys are the areas of focus. Try to explain more rather than just describing the report, such as possible causes or solution. Interprete it based on general analysis, for example if the crp is high, should it be considered as bacterial in most cases even though it could be viral."},
             {"role": "user", "content": report_text}
         ],
         max_tokens=1300,
